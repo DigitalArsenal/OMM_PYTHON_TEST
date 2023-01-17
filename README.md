@@ -6,5 +6,5 @@
 
 ### TODO
 
-- [ ] Read / validate ETH digital signature 
+- [X] Read / validate ETH digital signature 
 - [ ] Create Wrapper API

@@ -2,6 +2,8 @@ import requests
 import OMMCOLLECTION
 import OMM
 import flatbuffers
+from web3.auto import w3
+from eth_account.messages import encode_defunct
 
 provider_eth_address = "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
 fb_cid = "QmepW1hutjHdrPMhWBJCyinz8bfjtJ3WKsspb5vvcD6DTz"
@@ -15,9 +17,11 @@ with open("data/"+pdFP, "rb") as f:
 with open("data/"+pdFP+".sig", "r") as f:
     signature = f.read()
 
-# check if the signature starts with "0x" and remove it if so
-if signature.startswith("0x"):
-    signature = signature[2:]
+message = encode_defunct(text=fb_cid)
+stuff = w3.eth.account.recover_message(
+    message, signature=signature)
+
+print("Valid Digital Signature: " + stuff == provider_eth_address)
 
 yOMMCOLLECTION = OMMCOLLECTION.OMMCOLLECTION.GetRootAsOMMCOLLECTION(xOMM)
 
