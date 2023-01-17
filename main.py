@@ -1,4 +1,3 @@
-import requests
 import OMMCOLLECTION
 import OMM
 import flatbuffers
@@ -27,47 +26,47 @@ yOMMCOLLECTION = OMMCOLLECTION.OMMCOLLECTION.GetRootAsOMMCOLLECTION(xOMM)
 
 for yOMM in range(yOMMCOLLECTION.RECORDSLength()):
     yOMMRECORD = yOMMCOLLECTION.RECORDS(yOMM)
-    print(yOMMRECORD.NORAD_CAT_ID())
+    # print(yOMMRECORD.NORAD_CAT_ID())
 
-builder = flatbuffers.Builder(1024)
-ISS_OBJECT_NAME = builder.CreateString("ISS (ZARYA)")
-ISS_OBJECT_ID = builder.CreateString("1998-067A")
-ISS_OBJECT_EPOCH = builder.CreateString("2023-01-03T12:36:01.932768")
-ISS_OBJECT_CLASSIFICATION_TYPE = builder.CreateString("U")
+# create OMM object
+ommt = OMM.OMMT()
 
-OMM.Start(builder)
-OMM.AddNORAD_CAT_ID(builder, 25544)
-OMM.AddOBJECT_NAME(builder, ISS_OBJECT_NAME)
-OMM.AddOBJECT_ID(builder, ISS_OBJECT_ID)
-OMM.AddEPOCH(builder, ISS_OBJECT_EPOCH)
-OMM.AddMEAN_MOTION(builder, 15.49892242)
-OMM.AddECCENTRICITY(builder, 0.0005004)
-OMM.AddINCLINATION(builder, 51.6453)
-OMM.AddRA_OF_ASC_NODE(builder, 64.1711)
-OMM.AddARG_OF_PERICENTER(builder, 218.5032)
-OMM.AddMEAN_ANOMALY(builder, 238.7671)
-OMM.AddEPHEMERIS_TYPE(builder, 0)
-OMM.AddCLASSIFICATION_TYPE(builder, ISS_OBJECT_CLASSIFICATION_TYPE)
-OMM.AddNORAD_CAT_ID(builder, 25544)
-OMM.AddELEMENT_SET_NO(builder, 999)
-OMM.AddREV_AT_EPOCH(builder, 37625)
-OMM.AddBSTAR(builder, 0.00030219)
-OMM.AddMEAN_MOTION_DOT(builder, 0.00016767)
-OMM.AddMEAN_MOTION_DDOT(builder, 0)
-ISS_BUILT = OMM.End(builder)
-builder.Finish(ISS_BUILT)
-buf = builder.Output()
+# set OMM object properties
+ommt.NORAD_CAT_ID = 25544
+ommt.OBJECT_NAME = "ISS (ZARYA)"
+ommt.OBJECT_ID = "1998-067A"
+ommt.EPOCH = "2023-01-03T12:36:01.932768"
+ommt.MEAN_MOTION = 15.49892242
+ommt.ECCENTRICITY = 0.0005004
+ommt.INCLINATION = 51.6453
+ommt.RA_OF_ASC_NODE = 64.1711
+ommt.ARG_OF_PERICENTER = 218.5032
+ommt.MEAN_ANOMALY = 238.7671
+ommt.EPHEMERIS_TYPE = 0
+ommt.CLASSIFICATION_TYPE = "U"
+ommt.ELEMENT_SET_NO = 999
+ommt.REV_AT_EPOCH = 37625
+ommt.BSTAR = 0.00030219
+ommt.MEAN_MOTION_DOT = 0.00016767
+ommt.MEAN_MOTION_DDOT = 0
 
-OMMCOLLECTION.StartRECORDSVector(builder, 1)
-builder.PrependUOffsetTRelative(ISS_BUILT)
-SATS = builder.EndVector()
-OMMCOLLECTION.Start(builder)
-OMMCOLLECTION.AddRECORDS(builder, SATS)
-OMMC_BUILT = OMMCOLLECTION.End(builder)
-builder.Finish(OMMC_BUILT)
+# create builder and pack OMM properties
+builder = flatbuffers.Builder()
+builder.Finish(ommt.Pack(builder))
+iss_buf = builder.Output()
+
+# create OMMCOLLECTION and add OMM to the RECORDS list
+ommc = OMMCOLLECTION.OMMCOLLECTIONT()
+ommc.RECORDS = list()
+ommc.RECORDS.append(ommt)
+builder.Finish(ommc.Pack(builder))
 ommc_buf = builder.Output()
 
-ISS = OMM.OMM.GetRootAs(buf, 0)
+# added OMM check
+print("Added OMM has the same NORAD_CAT_ID: ",
+      ommt.NORAD_CAT_ID == ommc.RECORDS[0].NORAD_CAT_ID)
+
+ISS = OMM.OMM.GetRootAs(iss_buf, 0)
 print("CREATED OMM FOR ISS", ISS.NORAD_CAT_ID())
 
 OMMC = OMMCOLLECTION.OMMCOLLECTION.GetRootAs(ommc_buf, 0)
