@@ -21,7 +21,7 @@ message = encode_defunct(text=fb_cid)
 stuff = w3.eth.account.recover_message(
     message, signature=signature)
 
-print("Valid Digital Signature: " + stuff == provider_eth_address)
+print("Valid Digital Signature: ", stuff == provider_eth_address)
 
 yOMMCOLLECTION = OMMCOLLECTION.OMMCOLLECTION.GetRootAsOMMCOLLECTION(xOMM)
 
