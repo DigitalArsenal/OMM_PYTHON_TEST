@@ -2,7 +2,7 @@
 
 ### Required Dependencies
 
-`pip install flatbuffers eth_keys`
+`pip install flatbuffers web3 eth_account`
 
 ### TODO
 
