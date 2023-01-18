@@ -1,19 +1,30 @@
+from os import write
+import subprocess
 import OMMCOLLECTION
 import OMM
 import flatbuffers
 from web3.auto import w3
 from eth_account.messages import encode_defunct
+from eth_account import Account
+
+
+def calculate_cid(file_path):
+    cmd = ['ipfs', 'add', '-n', file_path]
+    output = subprocess.run(cmd, capture_output=True)
+    cid = output.stdout.decode().strip().split(" ")[1]
+    return cid
+
 
 provider_eth_address = "0x9858EfFD232B4033E47d90003D41EC34EcaEda94"
 fb_cid = "QmepW1hutjHdrPMhWBJCyinz8bfjtJ3WKsspb5vvcD6DTz"
-pdFP = f"{provider_eth_address}/{fb_cid}.OMM.fbs"
+pdFP = f"data/{provider_eth_address}/{fb_cid}.OMM.fbs"
 
 # Load OMMCOLLECTION from file
-with open("data/"+pdFP, "rb") as f:
+with open(pdFP, "rb") as f:
     xOMM = f.read()
 
 # Load the signature from a text file
-with open("data/"+pdFP+".sig", "r") as f:
+with open(pdFP+".sig", "r") as f:
     signature = f.read()
 
 message = encode_defunct(text=fb_cid)
@@ -66,8 +77,37 @@ ommc_buf = builder.Output()
 print("Added OMM has the same NORAD_CAT_ID: ",
       ommt.NORAD_CAT_ID == ommc.RECORDS[0].NORAD_CAT_ID)
 
-ISS = OMM.OMM.GetRootAs(iss_buf, 0)
-print("CREATED OMM FOR ISS", ISS.NORAD_CAT_ID())
+iss = OMM.OMM.GetRootAs(iss_buf, 0)
+print("CREATED OMM FOR ISS", iss.NORAD_CAT_ID())
 
-OMMC = OMMCOLLECTION.OMMCOLLECTION.GetRootAs(ommc_buf, 0)
-print("CREATED OMMCOLLECTION, ADDED ISS", OMMC.RECORDS(0).NORAD_CAT_ID())
+ommc = OMMCOLLECTION.OMMCOLLECTION.GetRootAs(ommc_buf, 0)
+print("CREATED OMMCOLLECTION, ADDED ISS", ommc.RECORDS(0).NORAD_CAT_ID())
+print("\n")
+
+iss_fp = "iss.fbs"
+ommc_fp = "ommc.fbs"
+
+iss_fpf = open(iss_fp, "wb")
+iss_fpf.write(iss_buf)
+iss_fpf.close()
+
+ommc_fpf = open(ommc_fp, "wb")
+ommc_fpf.write(ommc_buf)
+ommc_fpf.close()
+
+print(f"Original CID Match ({fb_cid[:7]}...{fb_cid[41:]}): ", fb_cid == calculate_cid(pdFP))
+
+iss_cid = calculate_cid(iss_fp)
+print("ISS CID: ", iss_cid)
+ommc_cid = calculate_cid(ommc_fp)
+print("OMMC CID: ", ommc_cid)
+print("\n")
+# `excess shallow future wheat amazing fee rug hammer hire crazy lumber mean`
+key = "0x1ab42cc412b618bdea3a599e3c9bae199ebf030895b039e9db1e30dafb12b727"
+
+signed_original = Account.sign_message(encode_defunct(text=fb_cid), key)
+print(f"Original SIG Match ({signature[:7]}...{signature[127:]}): ", signature == signed_original.signature.hex())
+signed_iss_cid = Account.sign_message(encode_defunct(text=iss_cid), key)
+print("SIGNED ISS CID: ", signed_iss_cid.signature.hex())
+signed_omm_cid = Account.sign_message(encode_defunct(text=ommc_cid), key)
+print("SIGNED OMMC CID: ", signed_omm_cid.signature.hex())
